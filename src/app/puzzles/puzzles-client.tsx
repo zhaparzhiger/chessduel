@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PositionBuilder } from "./position-builder";
 import { DIFFICULTY_LABELS, THEME_LABELS } from "@/lib/labels";
 import type { Difficulty, PuzzleTheme } from "@/types/game";
 
@@ -55,6 +57,8 @@ export function PuzzlesClient({ initialPuzzles }: { initialPuzzles: PuzzleRow[] 
   const [difficulty, setDifficulty] = useState<Difficulty>("EASY");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  // Способ ввода позиции: вручную (FEN) или конструктором на доске
+  const [inputTab, setInputTab] = useState<"manual" | "builder">("builder");
 
   // Живой предпросмотр: FEN валиден → показываем позицию
   const previewFen = useMemo(() => {
@@ -148,36 +152,56 @@ export function PuzzlesClient({ initialPuzzles }: { initialPuzzles: PuzzleRow[] 
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="p-fen">FEN позиции</Label>
-                <Input
-                  id="p-fen"
-                  required
-                  value={fen}
-                  onChange={(e) => setFen(e.target.value)}
-                  placeholder={START_HINT}
-                  className="font-mono text-sm"
-                />
-                {fen.trim() && !previewFen && (
-                  <p className="text-xs text-destructive">
-                    FEN пока некорректен — предпросмотр появится автоматически
-                  </p>
-                )}
-              </div>
+              {/* Два способа задать позицию и решение */}
+              <Tabs value={inputTab} onValueChange={(v) => setInputTab(v as typeof inputTab)}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="builder">🎨 Конструктор на доске</TabsTrigger>
+                  <TabsTrigger value="manual">⌨️ Ввести FEN</TabsTrigger>
+                </TabsList>
 
-              <div className="space-y-2">
-                <Label htmlFor="p-solution">
-                  Решение (SAN через пробел: ход ученика, ответ соперника, …)
-                </Label>
-                <Input
-                  id="p-solution"
-                  required
-                  value={solution}
-                  onChange={(e) => setSolution(e.target.value)}
-                  placeholder="Например: Re8# или Qa1+ Kg8 Qa8#"
-                  className="font-mono text-sm"
-                />
-              </div>
+                <TabsContent value="builder" className="mt-3">
+                  <PositionBuilder
+                    onApply={(f, s) => {
+                      setFen(f);
+                      setSolution(s);
+                      setInputTab("manual");
+                    }}
+                  />
+                </TabsContent>
+
+                <TabsContent value="manual" className="mt-3 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="p-fen">FEN позиции</Label>
+                    <Input
+                      id="p-fen"
+                      required
+                      value={fen}
+                      onChange={(e) => setFen(e.target.value)}
+                      placeholder={START_HINT}
+                      className="font-mono text-sm"
+                    />
+                    {fen.trim() && !previewFen && (
+                      <p className="text-xs text-destructive">
+                        FEN пока некорректен — предпросмотр появится автоматически
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="p-solution">
+                      Решение (SAN через пробел: ход ученика, ответ соперника, …)
+                    </Label>
+                    <Input
+                      id="p-solution"
+                      required
+                      value={solution}
+                      onChange={(e) => setSolution(e.target.value)}
+                      placeholder="Например: Re8# или Qa1+ Kg8 Qa8#"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
