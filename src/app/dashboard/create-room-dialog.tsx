@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -52,6 +53,7 @@ export function CreateRoomDialog({ open, onOpenChange, onCreated }: Props) {
   const [difficulty, setDifficulty] = useState<Difficulty | typeof ANY>(ANY);
   const [puzzleCount, setPuzzleCount] = useState(5);
   const [secondsPerPuzzle, setSecondsPerPuzzle] = useState(60);
+  const [customOnly, setCustomOnly] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -68,6 +70,7 @@ export function CreateRoomDialog({ open, onOpenChange, onCreated }: Props) {
           difficulty: difficulty === ANY ? null : difficulty,
           puzzleCount,
           secondsPerPuzzle,
+          customOnly,
         }),
       });
       const data = await res.json();
@@ -184,6 +187,20 @@ export function CreateRoomDialog({ open, onOpenChange, onCreated }: Props) {
                 onChange={(e) => setSecondsPerPuzzle(Number(e.target.value))}
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="custom-only">Только мои задачи</Label>
+              <p className="text-xs text-muted-foreground">
+                Использовать материалы из раздела «Мои задачи»
+              </p>
+            </div>
+            <Switch
+              id="custom-only"
+              checked={customOnly}
+              onCheckedChange={setCustomOnly}
+            />
           </div>
 
           <DialogFooter>

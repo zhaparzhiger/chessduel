@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DoorOpen, Plus } from "lucide-react";
+import { BookOpen, DoorOpen, MonitorPlay, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -44,10 +45,24 @@ export function TeacherDashboard({ initialRooms }: { initialRooms: RoomRow[] }) 
             Создавайте комнаты и запускайте дуэли для учеников.
           </p>
         </div>
-        <Button size="lg" onClick={() => setDialogOpen(true)}>
-          <Plus className="size-5" />
-          Создать комнату
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/puzzles">
+              <BookOpen className="size-5" />
+              Мои задачи
+            </Link>
+          </Button>
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/local">
+              <MonitorPlay className="size-5" />
+              Локальное занятие
+            </Link>
+          </Button>
+          <Button size="lg" onClick={() => setDialogOpen(true)}>
+            <Plus className="size-5" />
+            Создать комнату
+          </Button>
+        </div>
       </div>
 
       {rooms.length === 0 ? (

@@ -119,6 +119,7 @@ export class GameManager {
       FROM puzzles
       WHERE (${room.theme}::text IS NULL OR theme::text = ${room.theme}::text)
         AND (${room.difficulty}::text IS NULL OR difficulty::text = ${room.difficulty}::text)
+        AND (${room.customOnly}::boolean = false OR "authorId" = ${room.hostId})
       ORDER BY RANDOM()
       LIMIT ${room.puzzleCount}
     `;

@@ -26,9 +26,10 @@ model User {
   createdAt    DateTime @default(now())
 
   // Relations
-  roomsCreated Room[]        @relation("RoomHost")
-  attempts     Attempt[]
-  results      PlayerResult[]
+  roomsCreated    Room[]        @relation("RoomHost")
+  attempts        Attempt[]
+  results         PlayerResult[]
+  puzzlesAuthored Puzzle[]      @relation("PuzzleAuthor")
 
   @@map("users")
 }
@@ -69,10 +70,14 @@ model Puzzle {
   rating      Int         @default(1000) // условный рейтинг сложности
   // ID задачи в базе Lichess (для импортированных; защита от дубликатов)
   lichessId   String?     @unique
+  // Автор (null — задачи из общей базы; иначе — загружено учителем)
+  authorId    String?
+  author      User?       @relation("PuzzleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   createdAt   DateTime    @default(now())
 
   attempts Attempt[]
 
+  @@index([authorId])
   @@map("puzzles")
 }
 
@@ -102,6 +107,8 @@ model Room {
   difficulty    Difficulty?
   puzzleCount   Int         @default(5)
   secondsPerPuzzle Int      @default(60)
+  // Использовать только задачи, загруженные создателем комнаты
+  customOnly    Boolean     @default(false)
 
   hostId String
   host   User   @relation("RoomHost", fields: [hostId], references: [id], onDelete: Cascade)

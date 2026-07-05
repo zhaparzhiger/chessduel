@@ -31,6 +31,7 @@ const createSchema = z.object({
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).nullable().optional(),
   puzzleCount: z.number().int().min(1).max(20),
   secondsPerPuzzle: z.number().int().min(15).max(300),
+  customOnly: z.boolean().optional().default(false),
 });
 
 export async function POST(req: Request) {
@@ -58,11 +59,16 @@ export async function POST(req: Request) {
     where: {
       ...(parsed.data.theme ? { theme: parsed.data.theme } : {}),
       ...(parsed.data.difficulty ? { difficulty: parsed.data.difficulty } : {}),
+      ...(parsed.data.customOnly ? { authorId: session.user.id } : {}),
     },
   });
   if (available === 0) {
     return NextResponse.json(
-      { error: "Нет задач под выбранные тему и сложность" },
+      {
+        error: parsed.data.customOnly
+          ? "У вас нет своих задач под эти фильтры — загрузите их в разделе «Мои задачи»"
+          : "Нет задач под выбранные тему и сложность",
+      },
       { status: 400 }
     );
   }
@@ -84,6 +90,7 @@ export async function POST(req: Request) {
       difficulty: parsed.data.difficulty ?? null,
       puzzleCount: parsed.data.puzzleCount,
       secondsPerPuzzle: parsed.data.secondsPerPuzzle,
+      customOnly: parsed.data.customOnly,
       hostId: session.user.id,
     },
   });

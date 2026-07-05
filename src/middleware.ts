@@ -11,7 +11,7 @@ import { authConfig } from "@/lib/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-const PROTECTED = ["/dashboard", "/room"];
+const PROTECTED = ["/dashboard", "/room", "/local", "/puzzles"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
