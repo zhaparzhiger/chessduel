@@ -1,0 +1,20 @@
+{
+  // Отдельная конфигурация для кода сервера (Express + Socket.io + seed).
+  // Исполняется через tsx; здесь — типы Node и обычное разрешение модулей.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["server/**/*.ts", "prisma/seed.ts", "src/types/**/*.ts"]
+}

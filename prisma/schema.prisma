@@ -1,0 +1,165 @@
+// Prisma schema for Chess Duel
+// Educational real-time chess puzzle platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── Users & Auth ───────────────────────────
+
+enum Role {
+  TEACHER
+  STUDENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  roomsCreated Room[]        @relation("RoomHost")
+  attempts     Attempt[]
+  results      PlayerResult[]
+
+  @@map("users")
+}
+
+// ─────────────────────────── Puzzles ───────────────────────────
+
+enum PuzzleTheme {
+  MATE_IN_1
+  MATE_IN_2
+  MATE_IN_3
+  BACK_RANK     // мат по последней горизонтали
+  FORK          // двойной удар
+  PIN           // связка
+  SKEWER        // линейный удар («рентген»)
+  DISCOVERED    // вскрытый шах / нападение
+  SACRIFICE     // жертва
+  PROMOTION     // превращение пешки
+  HANGING_PIECE // висячая (незащищённая) фигура
+  ENDGAME       // эндшпиль
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Puzzle {
+  id          String      @id @default(cuid())
+  title       String
+  description String      // объяснение решения, показывается после ответа
+  fen         String      // стартовая позиция
+  // Решение как последовательность ходов в SAN через пробел.
+  // Ходы соперника (автоответы) идут на нечётных позициях.
+  solution    String
+  theme       PuzzleTheme
+  difficulty  Difficulty
+  rating      Int         @default(1000) // условный рейтинг сложности
+  // ID задачи в базе Lichess (для импортированных; защита от дубликатов)
+  lichessId   String?     @unique
+  createdAt   DateTime    @default(now())
+
+  attempts Attempt[]
+
+  @@map("puzzles")
+}
+
+// ─────────────────────────── Rooms & Games ───────────────────────────
+
+enum GameMode {
+  DUEL          // каждый сам за себя
+  TEAM          // командный: две команды набирают очки
+  BATTLE_ROYALE // королевская битва: худший выбывает после каждой задачи
+}
+
+enum RoomStatus {
+  LOBBY    // ждём игроков
+  PLAYING  // игра идёт
+  FINISHED // игра завершена
+}
+
+model Room {
+  id     String     @id @default(cuid())
+  code   String     @unique // 6-значный код для присоединения
+  name   String
+  status RoomStatus @default(LOBBY)
+
+  // Настройки, заданные учителем
+  mode          GameMode    @default(DUEL)
+  theme         PuzzleTheme?
+  difficulty    Difficulty?
+  puzzleCount   Int         @default(5)
+  secondsPerPuzzle Int      @default(60)
+
+  hostId String
+  host   User   @relation("RoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  session GameSession?
+
+  @@map("rooms")
+}
+
+// Завершённая (или идущая) игровая сессия комнаты
+model GameSession {
+  id        String    @id @default(cuid())
+  roomId    String    @unique
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  puzzleIds String[]  // порядок задач в сессии
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  attempts Attempt[]
+  results  PlayerResult[]
+
+  @@map("game_sessions")
+}
+
+// Попытка решения задачи учеником в рамках сессии
+model Attempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  puzzleId  String
+  puzzle    Puzzle   @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  correct   Boolean
+  timeMs    Int      // время до решения (или до ошибки), мс
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([sessionId, userId])
+  @@map("attempts")
+}
+
+// Итог игрока по сессии (для лидерборда и статистики)
+model PlayerResult {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  points  Int @default(0)
+  solved  Int @default(0)
+  place   Int? // итоговое место
+  team    String? // для командного режима: "A" | "B"
+
+  @@unique([userId, sessionId])
+  @@map("player_results")
+}

@@ -1,0 +1,24 @@
+# Локальная база данных для Chess Duel.
+# Запуск:  docker compose up -d
+# Порт 5434 выбран, чтобы не конфликтовать с другими локальными PostgreSQL.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chessduel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chessduel
+      POSTGRES_PASSWORD: chessduel
+      POSTGRES_DB: chessduel
+    ports:
+      - "5434:5432"
+    volumes:
+      - chessduel_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chessduel"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  chessduel_pgdata:

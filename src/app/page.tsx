@@ -1,102 +1,108 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Crown, Swords, Timer, Trophy, Users, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { auth } from "@/lib/auth";
 
-export default function Home() {
+/**
+ * Лендинг: краткое описание платформы + вход.
+ * Если пользователь уже вошёл — предлагаем перейти в кабинет.
+ */
+export default async function Home() {
+  const session = await auth();
+
+  const features = [
+    {
+      icon: Swords,
+      title: "Реал-тайм дуэли",
+      text: "Ученики решают одну задачу одновременно и соревнуются за первое место.",
+    },
+    {
+      icon: Timer,
+      title: "Таймер и очки",
+      text: "Баллы за скорость и точность. Бонус тому, кто решил первым.",
+    },
+    {
+      icon: Trophy,
+      title: "Живой лидерборд",
+      text: "Рейтинг обновляется мгновенно — виден каждый решённый ход.",
+    },
+    {
+      icon: Users,
+      title: "Три режима",
+      text: "Дуэль, командный бой и королевская битва на выбывание.",
+    },
+  ];
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-dvh bg-gradient-to-b from-background to-muted/40">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
+        <div className="flex items-center gap-2 font-heading text-xl font-bold">
+          <Crown className="size-6 text-primary" />
+          Chess Duel
         </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          {session?.user ? (
+            <Button asChild>
+              <Link href="/dashboard">В кабинет</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Войти</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/register">Регистрация</Link>
+              </Button>
+            </>
+          )}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4">
+        <section className="flex flex-col items-center gap-6 py-16 text-center sm:py-24">
+          <div className="inline-flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 text-sm text-muted-foreground">
+            <Zap className="size-4 text-primary" />
+            Шахматные задачи в реальном времени
+          </div>
+          <h1 className="max-w-3xl font-heading text-4xl font-extrabold tracking-tight sm:text-6xl">
+            Превратите урок шахмат в{" "}
+            <span className="text-primary">захватывающую дуэль</span>
+          </h1>
+          <p className="max-w-2xl text-lg text-muted-foreground">
+            Учитель создаёт комнату, ученики присоединяются по коду и решают
+            тактические задачи наперегонки. Мгновенная обратная связь, объяснения
+            и живой рейтинг.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link href={session?.user ? "/dashboard" : "/register"}>
+                Начать бесплатно
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/login">У меня есть код комнаты</Link>
+            </Button>
+          </div>
+        </section>
+
+        <section className="grid gap-4 pb-24 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <f.icon className="mb-3 size-8 text-primary" />
+              <h3 className="mb-1 font-heading font-semibold">{f.title}</h3>
+              <p className="text-sm text-muted-foreground">{f.text}</p>
+            </div>
+          ))}
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+        Chess Duel — образовательная платформа для тренеров и учеников.
       </footer>
     </div>
   );

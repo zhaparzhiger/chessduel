@@ -1,0 +1,23 @@
+# Blueprint для деплоя Chess Duel на Render (https://render.com)
+#
+# Использование: Render Dashboard → New → Blueprint → выбрать этот репозиторий.
+# База данных: создайте бесплатный PostgreSQL на https://neon.tech и вставьте
+# строку подключения в переменную DATABASE_URL при деплое.
+services:
+  - type: web
+    name: chessduel
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    # Миграции и базовый seed выполняются на старте (оба идемпотентны)
+    startCommand: npx prisma migrate deploy && npm run db:seed && npm run start
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        sync: false # вставьте строку подключения Neon при создании сервиса
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        sync: false # https://<имя-сервиса>.onrender.com — после первого деплоя
+      - key: NODE_VERSION
+        value: "22"

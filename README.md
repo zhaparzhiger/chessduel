@@ -1,36 +1,195 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ♟️ Chess Duel
 
-## Getting Started
+Образовательная платформа для **шахматных дуэлей в реальном времени**. Учитель
+создаёт комнату, ученики присоединяются по коду и решают тактические задачи
+наперегонки — с таймером, живым лидербордом, мгновенной обратной связью и
+разбором решений.
 
-First, run the development server:
+![stack](https://img.shields.io/badge/Next.js-15-black) ![ts](https://img.shields.io/badge/TypeScript-blue) ![realtime](https://img.shields.io/badge/Socket.io-realtime-green)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ✨ Возможности
+
+- **Роли** — учитель (создаёт комнаты) и ученик (решает задачи).
+- **Три режима игры:**
+  - **Дуэль** — каждый сам за себя, побеждает набравший больше очков.
+  - **Командный бой** — две команды (A/B) складывают очки участников.
+  - **Королевская битва** — после каждой задачи выбывает худший игрок.
+- **Гибкие настройки комнаты** — тема, сложность, количество задач, время на задачу.
+- **Реалтайм-геймплей** — все решают одну задачу одновременно; ходы валидируются
+  на сервере через `chess.js` (решение никогда не отправляется клиенту заранее).
+- **Ввод хода** перетаскиванием, кликами по клеткам (удобно на планшете) или
+  нотацией с клавиатуры.
+- **Живой лидерборд** с индикацией, кто уже решил текущую задачу.
+- **Очки** за скорость + бонус тому, кто решил первым, − штраф за повторные попытки.
+- **Разбор** после каждой задачи: решение + объяснение.
+- **Чат комнаты**, тёмная тема, адаптивная вёрстка, loading-состояния, анимации.
+
+## 🧱 Технологический стек
+
+| Слой            | Технология                                   |
+| --------------- | -------------------------------------------- |
+| Frontend        | Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
+| Backend         | Express (кастомный сервер поверх Next.js)    |
+| Реалтайм        | Socket.io                                    |
+| Шахматы         | chess.js + react-chessboard                  |
+| База данных     | PostgreSQL + Prisma ORM                      |
+| Аутентификация  | NextAuth.js (Auth.js v5), провайдер Credentials |
+
+## 📁 Структура проекта
+
+```
+chessduel/
+├── prisma/
+│   ├── schema.prisma          # модели: User, Puzzle, Room, GameSession, Attempt, PlayerResult
+│   └── seed.ts                # 10 задач + демо-аккаунты
+├── server/                    # кастомный сервер (запускается через tsx)
+│   ├── index.ts               # Express + Next.js + Socket.io на одном порту
+│   ├── game/
+│   │   └── GameManager.ts     # игровой движок: комнаты, ходы, очки, режимы
+│   └── socket/
+│       ├── auth.ts            # аутентификация сокета по куке NextAuth (JWT)
+│       └── index.ts           # обработчики Socket.io-событий
+├── src/
+│   ├── app/
+│   │   ├── page.tsx           # лендинг
+│   │   ├── login/ register/   # страницы входа и регистрации
+│   │   ├── dashboard/         # кабинет (учитель / ученик)
+│   │   ├── room/[code]/       # игровая комната (лобби → игра → результаты)
+│   │   └── api/
+│   │       ├── auth/[...nextauth]/  # NextAuth
+│   │       ├── register/            # регистрация
+│   │       └── rooms/               # создание комнат
+│   ├── components/
+│   │   ├── ui/                # shadcn/ui
+│   │   ├── game/             # доска, таймер, лидерборд, чат, разбор, результаты
+│   │   ├── providers.tsx     # SessionProvider + ThemeProvider
+│   │   └── app-header.tsx, theme-toggle.tsx
+│   ├── hooks/
+│   │   ├── use-socket.ts     # единое подключение Socket.io
+│   │   └── use-game-room.ts  # вся клиентская логика комнаты
+│   ├── lib/
+│   │   ├── auth.ts, auth.config.ts   # конфиг Auth.js (полный + edge-safe)
+│   │   ├── prisma.ts         # singleton Prisma-клиента
+│   │   ├── labels.ts         # человекочитаемые подписи enum
+│   │   └── room-code.ts      # генерация кода комнаты
+│   ├── types/
+│   │   ├── game.ts           # общий протокол Socket.io (клиент + сервер)
+│   │   └── next-auth.d.ts    # расширение типов сессии
+│   └── middleware.ts         # защита /dashboard и /room
+├── docker-compose.yml        # PostgreSQL для локальной разработки
+└── .env.example
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Запуск
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Требования
+- Node.js 20+
+- Docker (для PostgreSQL) **или** свой PostgreSQL-сервер
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Установка зависимостей
+```bash
+npm install
+```
 
-## Learn More
+### 3. Переменные окружения
+Скопируйте `.env.example` в `.env` и при необходимости отредактируйте:
+```bash
+cp .env.example .env
+```
+Сгенерируйте секрет для Auth.js:
+```bash
+npx auth secret        # запишет AUTH_SECRET в .env
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 4. База данных
+Поднимите PostgreSQL через Docker (порт **5434**, чтобы не конфликтовать с другими):
+```bash
+docker compose up -d
+```
+Примените миграции и загрузите демо-данные:
+```bash
+npm run db:migrate     # создаёт таблицы
+npm run db:seed        # 10 задач + демо-аккаунты
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 5. Старт приложения
+```bash
+npm run dev
+```
+Откройте **http://localhost:3000** (или порт из `PORT` в `.env`).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> Приложение запускается через кастомный сервер (`server/index.ts`), который
+> объединяет Next.js, Express и Socket.io на одном порту — это даёт общий origin
+> для кук NextAuth и веб-сокетов.
 
-## Deploy on Vercel
+### Продакшн
+```bash
+npm run build
+npm start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 👤 Демо-аккаунты (после `db:seed`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Роль    | Email                     | Пароль       |
+| ------- | ------------------------- | ------------ |
+| Учитель | `teacher@chessduel.ru`    | `teacher123` |
+| Ученик  | `student1@chessduel.ru`   | `student123` |
+| Ученик  | `student2@chessduel.ru`   | `student123` |
+| Ученик  | `student3@chessduel.ru`   | `student123` |
+
+На странице входа есть кнопки быстрого заполнения демо-данными.
+
+## 🎮 Как играть
+
+1. Войдите как **учитель** → «Создать комнату» → выберите режим, тему, сложность,
+   число задач и время. Получите **6-значный код**.
+2. Ученики входят под своими аккаунтами → вводят код в кабинете.
+3. Учитель нажимает **«Начать игру»** — всем выдаётся первая задача.
+4. Ученики решают наперегонки; лидерборд обновляется мгновенно.
+5. После каждой задачи — разбор с решением. В конце — итоговая таблица и подиум.
+
+## 🛠️ Полезные скрипты
+
+| Команда              | Действие                                    |
+| -------------------- | ------------------------------------------- |
+| `npm run dev`        | Дев-сервер (Next + Express + Socket.io)     |
+| `npm run build`      | Продакшн-сборка Next.js                     |
+| `npm start`          | Запуск продакшн-сборки                      |
+| `npm run db:migrate` | Применить миграции Prisma                   |
+| `npm run db:seed`    | Загрузить базовые задачи и демо-аккаунты    |
+| `npm run db:import`  | Импорт задач из базы Lichess (см. ниже)     |
+| `npm run db:studio`  | Открыть Prisma Studio (просмотр БД)         |
+| `npm run lint`       | ESLint                                      |
+
+## 📦 Импорт задач из Lichess
+
+В проекте есть скрипт импорта из открытой базы Lichess (~4 млн задач):
+
+```bash
+npm run db:import           # ~2700 задач (150 на каждую пару тема×сложность)
+npm run db:import -- 500    # больше: 500 на каждую пару (~9000 задач)
+```
+
+Скрипт стримингово скачивает и разбирает базу (файл целиком не сохраняется),
+берёт только качественные задачи (популярность ≥ 70, ≥ 200 сыгранных партий),
+конвертирует ходы UCI → SAN и останавливается, как только квоты набраны.
+Повторный запуск не создаёт дублей (`lichessId` уникален).
+
+## 📝 Добавление своих задач
+
+Задачи хранятся в таблице `puzzles`. Формат поля `solution` — ходы в нотации SAN
+через пробел, где **чётные** ходы (0, 2, …) делает игрок, а **нечётные** —
+автоответ соперника. Пример мата в 2 хода:
+
+```
+Qa1+ Kg8 Qa8#
+```
+
+Добавьте новые записи в `prisma/seed.ts` и выполните `npm run db:seed`.
+
+## 🔐 Google-вход (опционально)
+
+В `src/lib/auth.ts` раскомментируйте провайдер `Google` и задайте
+`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` в `.env`.
